@@ -1,0 +1,72 @@
+SELECT *
+FROM BEBEDOR
+WHERE cedula NOT IN (
+    SELECT cedula
+    FROM GUSTA
+    WHERE codigo_bebida = (
+        SELECT codigo_bebida
+        FROM BEBIDA
+        WHERE nombre_bebida = 'colombiana'
+    )
+);
+SELECT *
+FROM TIENDA
+WHERE codigo_tienda NOT IN (
+    SELECT codigo_tienda
+    FROM FRECUENTA
+    WHERE cedula = (
+        SELECT cedula
+        FROM BEBEDOR
+        WHERE nombre = 'Andres Camilo Restrepo'
+    )
+);
+SELECT *
+FROM BEBEDOR B
+WHERE EXISTS (
+    SELECT 1
+    FROM GUSTA G
+    WHERE G.cedula = B.cedula
+) AND EXISTS (
+    SELECT 1
+    FROM FRECUENTA F
+    WHERE F.cedula = B.cedula
+);
+SELECT B.cedula, B.nombre, BD.nombre_bebida
+FROM BEBEDOR B, BEBIDA BD
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM GUSTA G
+    WHERE G.cedula = B.cedula AND G.codigo_bebida = BD.codigo_bebida
+);
+SELECT B.*
+FROM BEBEDOR B
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM FRECUENTA F
+    WHERE F.cedula = B.cedula
+    AND F.codigo_tienda NOT IN (
+        SELECT FLP.codigo_tienda
+        FROM FRECUENTA FLP
+        WHERE FLP.cedula = (SELECT cedula FROM BEBEDOR WHERE nombre =
+'Luis Perez')
+    )
+);
+SELECT B.*
+FROM BEBEDOR B
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM FRECUENTA F
+    WHERE F.cedula = B.cedula
+    AND F.codigo_tienda NOT IN (
+        SELECT V.codigo_tienda
+        FROM VENDE V, GUSTA G
+        WHERE V.codigo_bebida = G.codigo_bebida
+        AND G.cedula = B.cedula
+        GROUP BY V.codigo_tienda
+        HAVING COUNT(DISTINCT V.codigo_bebida) = (
+            SELECT COUNT(DISTINCT G2.codigo_bebida)
+            FROM GUSTA G2
+            WHERE G2.cedula = B.cedula
+        )
+    )
+);
